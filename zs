@@ -48,6 +48,19 @@ sha() {
     fi
 }
 
+readonly DEPS_RE='^[[:space:]]*//DEPS[[:space:]]+([^[:space:][]+)(\[([^]]*)\])?([[:space:]]+AS[[:space:]]+([^[:space:]]+))?[[:space:]]*$'
+
+deps_fingerprint() {
+    local script=$1 lines
+    lines=$(grep -E "$DEPS_RE" "$script" 2>/dev/null | LC_ALL=C sort || true)
+    [[ -n "$lines" ]] || { printf '-'; return 0; }
+    if command -v sha256sum >/dev/null 2>&1; then
+        printf '%s' "$lines" | sha256sum | awk '{print $1}'
+    else
+        printf '%s' "$lines" | openssl dgst -sha256 | awk '{print $NF}'
+    fi
+}
+
 resolve_zs_root() {
     if [[ -n "${ZS_ROOT:-}" ]]; then
         printf '%s' "$ZS_ROOT"
@@ -107,6 +120,7 @@ release_lock() {
     rmdir "$_ZS_LOCK" 2>/dev/null || true
     _ZS_LOCK=
 }
+# ponytail: mkdir lock per script cache; rm .zs_lock manually if a build crashed mid-flight.
 acquire_lock() {
     local lock=$1
     if mkdir "$lock" 2>/dev/null; then
@@ -246,6 +260,7 @@ EOF
 
 fetch_packages() {
     local zig_bin=$1
+    # ponytail: hardcoded build.zig.zon fingerprint; regen via zig init if zig fetch rejects it.
     cat >build.zig.zon <<'EOF'
 .{
     .name = .script,
@@ -359,7 +374,7 @@ cmd_selfcheck() {
     command -v curl >/dev/null || { echo "zs: missing curl" >&2; failures=1; }
 
     local re line
-    re='^[[:space:]]*//DEPS[[:space:]]+([^[:space:][]+)(\[([^]]*)\])?([[:space:]]+AS[[:space:]]+([^[:space:]]+))?[[:space:]]*$'
+    re="$DEPS_RE"
     line='//DEPS gh:ziglang/zig/v0.14.0'
     if [[ "$line" =~ $re ]] && [[ "${BASH_REMATCH[1]}" == "gh:ziglang/zig/v0.14.0" ]]; then
         echo "zs: ok //DEPS parse"
@@ -413,7 +428,9 @@ mkdir -p "$ROOT"
 cd "$ROOT"
 
 CONTENT_HASH="$(sha "$SCRIPT")"
-STAMP="${CONTENT_HASH}|${HOST}|${STAMP_ZIG}"
+DEPS_FP="$(deps_fingerprint "$SCRIPT")"
+# ponytail: stamp hashes //DEPS lines, not resolved package versions; bump a dep line or zs clean to refresh.
+STAMP="${CONTENT_HASH}|${DEPS_FP}|${HOST}|${STAMP_ZIG}"
 BIN="$ROOT/script"
 
 prepare_run_env() {
@@ -458,7 +475,6 @@ fi
 PACKAGES=()
 GH_FILES=()
 
-DEPS_RE='^[[:space:]]*//DEPS[[:space:]]+([^[:space:][]+)(\[([^]]*)\])?([[:space:]]+AS[[:space:]]+([^[:space:]]+))?[[:space:]]*$'
 while IFS= read -r line || [[ -n "$line" ]]; do
     [[ "$line" =~ $DEPS_RE ]] || continue
     add_deps_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[5]:-}" "${BASH_REMATCH[3]:-}"
