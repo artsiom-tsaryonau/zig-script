@@ -4,9 +4,14 @@ A script runner for Zig with inline //DEPS — GitHub and git remotes.
 
 jbang-style single-file scripts. Every dep is explicit: `gh:` or `git:`.
 
+### Runner (put `zs` on PATH)
+
 ```bash
+git clone git@github.com:artsiom-tsaryonau/zig-script.git
+cd zig-script
 chmod +x zs
 export PATH="$PWD:$PATH"
+# permanent: sudo ln -sf "$PWD/zs" /usr/local/bin/zs
 # Needs Bash 4.3+ (nameref). On macOS: brew install bash
 zs selfcheck
 ```
@@ -25,9 +30,8 @@ sudo dnf install bash zig curl git
 
 ```bash
 brew install bash zig curl git
+export PATH="$(brew --prefix bash)/bin:$PATH"   # stock /bin/bash is 3.2
 ```
-
-Stock macOS `/bin/bash` is 3.2 — put Homebrew `bash` first on `PATH`, or scripts will fail the version check.
 
 You do **not** need a global `build.zig.zon` or checked-in `build.zig`. `zs` generates those per script in the cache. You do **not** need different `//DEPS` per OS.
 
@@ -65,6 +69,8 @@ If `.zs/` exists in the current directory (or `ZS_ROOT` is set), `zs` picks it u
 zs clean examples/hello.zig   # drop one script's build dir
 zs clean --all                # wipe cache only
 ```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the pipeline.
 
 ## `//DEPS`
 
