@@ -2,6 +2,6 @@
 
 const std = @import("std");
 
-pub fn main() !void {
-    try std.io.getStdOut().writer().print("Hello from Zig!\n", .{});
+pub fn main(init: std.process.Init) !void {
+    try std.Io.File.stdout().writeStreamingAll(init.io, "Hello from Zig!\n");
 }

@@ -358,8 +358,9 @@ cmd_selfcheck() {
 
     cat >"$tmp/hi.zig" <<'EOF'
 const std = @import("std");
-pub fn main() !void {
-    try std.io.getStdOut().writer().print("ok\n", .{});
+
+pub fn main(init: std.process.Init) !void {
+    try std.Io.File.stdout().writeStreamingAll(init.io, "ok\n");
 }
 EOF
     out="$(ZS_CACHE="$tmp/cache" "$0" "$tmp/hi.zig" 2>/dev/null || true)"
