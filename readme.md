@@ -41,6 +41,7 @@ Still global by design: the `zig` compiler, `curl`, and `git` (used by `zig fetc
 
 ```bash
 zs examples/hello.zig
+zs examples/clap.zig
 zs clean examples/hello.zig
 ```
 
@@ -89,11 +90,14 @@ Prefix is **required**:
 Optional `AS import_name` when the default module name is wrong (must match the dependency's exported module):
 
 ```zig
+//DEPS gh:Hejsil/zig-clap/0.12.0 AS clap
 //DEPS gh:zigzap/zap/v0.1.7-pre
 //DEPS gh:owner/my-lib/v1.0 AS my_lib
 //DEPS gh:owner/repo/ref/path/file.zig
 //DEPS git:https://gitlab.com/user/repo.git#v1.0
 ```
+
+See `examples/clap.zig` for a git-package example.
 
 With no `//DEPS`, `zs` uses `zig build-exe` directly. With git deps, it generates `build.zig` / `build.zig.zon` and runs `zig build`.
 

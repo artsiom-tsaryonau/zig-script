@@ -205,15 +205,16 @@ add_deps_ref() {
 }
 
 write_build_zig() {
-    local body="" entry key url import_name
+    local body_deps="" body_imports="" entry key url import_name
 
     for entry in ${PACKAGES[@]+"${PACKAGES[@]}"}; do
         IFS='|' read -r key url import_name <<<"$entry"
-        body+=$'    const '"$key"$' = b.dependency("'$key$'", .{
+        body_deps+=$'    const '"$key"$' = b.dependency("'$key$'", .{
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("'$import_name$'", '"$key"$'.module("'$import_name$'"));
+'
+        body_imports+=$'                .{ .name = "'$import_name$'", .module = '"$key"$'.module("'$import_name$'") },
 '
     done
 
@@ -224,15 +225,20 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
+$body_deps
     const exe = b.addExecutable(.{
         .name = "script",
-        .root_source_file = b.path("script.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("script.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+$body_imports
+            },
+        }),
     });
     exe.root_module.addIncludePath(b.path("."));
 
-$body
     b.installArtifact(exe);
 }
 EOF
@@ -244,6 +250,12 @@ fetch_packages() {
 .{
     .name = .script,
     .version = "0.0.0",
+    .fingerprint = 0x1c81873a54f31d7f,
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "script.zig",
+    },
 }
 EOF
     local entry key url _import_name
@@ -255,9 +267,9 @@ EOF
 
 zig_build() {
     local zig_bin=$1
-    fetch_packages "$zig_bin"
     write_build_zig
-    "$zig_bin" build -Doptimize=ReleaseFast
+    fetch_packages "$zig_bin"
+    "$zig_bin" build
 }
 
 zig_build_exe() {

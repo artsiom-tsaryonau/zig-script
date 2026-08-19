@@ -31,7 +31,7 @@ script.zig
          (binary at cache/script or cache/zig-out/bin/script)
 ```
 
-Build uses **ReleaseFast**. With package deps, `zs` generates ephemeral `build.zig` / `build.zig.zon` in the cache workspace — nothing checked into the script repo.
+Build uses **ReleaseFast** (via generated `build.zig`). With package deps, `zs` generates ephemeral `build.zig` / `build.zig.zon` in the cache workspace — nothing checked into the script repo. Requires **Zig 0.16+** for the generated build files.
 
 ### CWD contract
 
