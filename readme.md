@@ -1,6 +1,8 @@
 # zig-script
 
-jbang-style single-file Zig scripts. Dependencies live in `//DEPS` comments; builds cache under `~/.cache/zig-script` (or `.zs/cache`).
+A script runner for Zig with inline //DEPS — GitHub and git remotes.
+
+jbang-style single-file scripts. Dependencies live in `//DEPS` comments; builds cache under `~/.cache/zig-script` (or `.zs/cache`).
 
 ## Install
 
