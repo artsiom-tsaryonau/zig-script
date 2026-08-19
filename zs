@@ -117,13 +117,26 @@ read_stamp() {
 _ZS_LOCK=
 release_lock() {
     [[ -n "${_ZS_LOCK:-}" ]] || return 0
-    rmdir "$_ZS_LOCK" 2>/dev/null || true
+    rm -rf "$_ZS_LOCK" 2>/dev/null || true
     _ZS_LOCK=
 }
-# ponytail: mkdir lock per script cache; rm .zs_lock manually if a build crashed mid-flight.
 acquire_lock() {
-    local lock=$1
+    local lock=$1 pid
     if mkdir "$lock" 2>/dev/null; then
+        echo $$ >"$lock/pid"
+        _ZS_LOCK=$lock
+        trap release_lock EXIT
+        return 0
+    fi
+    if [[ -f "$lock/pid" ]]; then
+        pid=$(<"$lock/pid")
+        kill -0 "$pid" 2>/dev/null && die "locked ($lock) — zs pid $pid is building this script"
+        rm -rf "$lock"
+    else
+        rmdir "$lock" 2>/dev/null || true
+    fi
+    if mkdir "$lock" 2>/dev/null; then
+        echo $$ >"$lock/pid"
         _ZS_LOCK=$lock
         trap release_lock EXIT
         return 0
