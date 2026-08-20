@@ -41,6 +41,7 @@ Still global by design: the `zig` compiler, `curl`, and `git` (used by `zig fetc
 
 ```bash
 zs examples/hello.zig
+zs examples/json.zig
 zs examples/clap.zig
 zs clean examples/hello.zig
 ```
@@ -97,7 +98,11 @@ Optional `AS import_name` when the default module name is wrong (must match the 
 //DEPS git:https://gitlab.com/user/repo.git#v1.0
 ```
 
-See `examples/clap.zig` for a git-package example.
+Examples:
+
+- `examples/hello.zig` — minimal no-deps script
+- `examples/json.zig` — reads `config.json` from `ZS_CWD`, or prints sample JSON
+- `examples/clap.zig` — package dependency via `gh:`
 
 With no `//DEPS`, `zs` uses `zig build-exe` directly. With git deps, it generates `build.zig` / `build.zig.zon` and runs `zig build`.
 
