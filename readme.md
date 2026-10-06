@@ -125,3 +125,7 @@ Each script gets `<cache>/<sha256(abspath)>/`. Stamp is `content|host|zig@versio
 ## Platforms
 
 Tested target: **macOS** and **Fedora** with Homebrew/dnf `bash`, `zig`, and `curl`.
+
+## Reproducibility
+
+`zs` has no lockfile. Pin `gh:` and `git:` dependencies to a tag or commit (not `main`/`master`), or builds change when upstream moves.

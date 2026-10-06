@@ -4,6 +4,13 @@
 # Requires Bash 4.3+ (nameref). Fedora and Homebrew bash are fine;
 # stock macOS /bin/bash 3.2 is not — put Bash 4.3+ first on PATH.
 #
+# TODO(shared core, not started): this tool shares ~70% of its bash with cx/ns/zs
+# (locks, cache, stamp, //DEPS parsing, cwd, selfcheck). Plan: a separate
+# script-runner-core repo holds runner.sh; each tool keeps only a language
+# adapter (lang.sh) and `make dist` concatenates core + adapter into the
+# standalone `zs`, so install stays one file. Core vendored per repo
+# (submodule or copy); a core fix = fix once, re-vendor, rebuild three times.
+#
 #   //DEPS gh:owner/repo/ref
 #   //DEPS gh:owner/repo/ref AS depname
 #   //DEPS git:https://gitlab.com/user/repo.git#ref
@@ -451,6 +458,7 @@ prepare_run_env() {
 }
 
 run_bin() {
+    release_lock  # exec skips the EXIT trap; don't hold the build lock while the program runs
     prepare_run_env
     cd "$CALLER_PWD"
     exec "$BIN" "$@"
@@ -493,7 +501,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     add_deps_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[5]:-}" "${BASH_REMATCH[3]:-}"
 done <"$SCRIPT"
 
-sed '1{/^#!/d;}' "$SCRIPT" >script.zig
+sed '1{s/^#!.*//;}' "$SCRIPT" >script.zig
 
 if [[ ${#PACKAGES[@]} -gt 0 ]]; then
     zig_build "$ZIG_BIN"
